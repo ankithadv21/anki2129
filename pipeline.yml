@@ -1,4 +1,4 @@
-name: SAST Pipeline
+name: SAST Pipeline with Bandit on Windows
 
 on:
   push:
@@ -13,32 +13,25 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Install SAST Tool (Example: SonarScanner CLI)
-        run: |
-          powershell -Command "& { \
-            Invoke-WebRequest -Uri 'https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.zip' -OutFile 'sonar-scanner-cli.zip'; \
-            Expand-Archive -Path 'sonar-scanner-cli.zip' -DestinationPath 'sonar-scanner-cli'; \
-          }"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x  # Replace this with the Python version required for your project
 
-      - name: Add SonarScanner to PATH
+      - name: Install Bandit
         run: |
-          powershell -Command "& { \
-            [Environment]::SetEnvironmentVariable('Path', $Env:Path + ';' + (Get-Location).Path + '\sonar-scanner-cli\bin', [EnvironmentVariableTarget]::Process); \
-          }"
+          python -m pip install --upgrade pip
+          pip install bandit
 
-      - name: Perform SAST Scan
+      - name: Run Bandit Scan
         run: |
-          powershell -Command "& { \
-            sonar-scanner.bat -Dsonar.projectKey=ankithadv21 -Dsonar.sources=. -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=095827d8444418a255928c642b7dcdd018b12992; \
-          }"
+          bandit -r . -f json -o bandit-report.json
 
-      - name: Check for L1 Issues
-        run: |
-          powershell -Command "& { \
-            $CRITICAL_ISSUES = (Get-Content report.json | ConvertFrom-Json).critical_issues_count; \
-            if ($CRITICAL_ISSUES -gt 20) { \
-              Write-Host 'Pipeline failed due to more than 20 L1 issues.'; exit 1; \
-            } else { \
-              Write-Host 'Pipeline passed with acceptable L1 issues.'; exit 0; \
-            } \
-          }"
+      - name: Print Bandit Report
+        run: type bandit-report.json
+
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: bandit-report
+          path: bandit-report.json
