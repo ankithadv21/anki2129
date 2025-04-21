@@ -25,7 +25,7 @@ jobs:
           -Dsonar.sources=. \
           -Dsonar.host.url=https://sonarcloud.io \
           -Dsonar.login=095827d8444418a255928c642b7dcdd018b12992
-
+      
       - name: Check for L1 Issues
         run: |
           CRITICAL_ISSUES=$(cat report.json | jq '.critical_issues_count') # Adjust report parsing
