@@ -7,36 +7,38 @@ on:
 
 jobs:
   sast-and-validation:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Install SAST Tool (Example: SonarScanner CLI)
+      - name: Install dependencies
         run: |
-          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.zip
-          unzip sonar-scanner-cli-4.6.2.zip
-          export PATH=$PATH:$(pwd)/sonar-scanner-4.6.2/bin
+          powershell -Command "& { \
+            Invoke-WebRequest -Uri 'https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.zip' -OutFile 'sonar-scanner-cli.zip'; \
+            Expand-Archive -Path 'sonar-scanner-cli.zip' -DestinationPath 'sonar-scanner-cli'; \
+          }"
+
+      - name: Add SonarScanner to PATH
+        run: |
+          powershell -Command "& { \
+            [Environment]::SetEnvironmentVariable('Path', $Env:Path + ';' + (Get-Location).Path + '\sonar-scanner-cli\bin', [EnvironmentVariableTarget]::Process); \
+          }"
 
       - name: Perform SAST Scan
-        run: sonar-scanner \
-          -Dsonar.projectKey=ankithadv21 \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=https://sonarcloud.io \
-          -Dsonar.login=095827d8444418a255928c642b7dcdd018b12992
+        run: |
+          powershell -Command "& { \
+            sonar-scanner.bat -Dsonar.projectKey=ankithadv21 -Dsonar.sources=. -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=095827d8444418a255928c642b7dcdd018b12992; \
+          }"
+
       - name: Check for L1 Issues
         run: |
-            CRITICAL_ISSUES=$(cat report.json | jq '.critical_issues_count') # Adjust report parsing
-            if [ "$CRITICAL_ISSUES" -gt 20 ]; then
-            echo "Pipeline failed due to more than 20 L1 issues."
-            exit 1
-            else
-            echo "Pipeline passed with acceptable L1 issues."
-            exit 0
-            fi
-
-      
-      
-        
- 
+          powershell -Command "& { \
+            $CRITICAL_ISSUES = (Get-Content report.json | ConvertFrom-Json).critical_issues_count; \
+            if ($CRITICAL_ISSUES -gt 20) { \
+              Write-Host 'Pipeline failed due to more than 20 L1 issues.'; exit 1; \
+            } else { \
+              Write-Host 'Pipeline passed with acceptable L1 issues.'; exit 0; \
+            } \
+          }"
