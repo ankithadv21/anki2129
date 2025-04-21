@@ -42,3 +42,11 @@ jobs:
               Write-Host 'Pipeline passed with acceptable L1 issues.'; exit 0; \
             } \
           }"
+          
+      - name: Install SAST Tool (Windows Example)
+        run: |
+          powershell -Command "& { \
+            Invoke-WebRequest -Uri 'https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.zip' -OutFile 'sonar-scanner-cli.zip'; \
+            Expand-Archive -Path 'sonar-scanner-cli.zip' -DestinationPath 'sonar-scanner-cli'; \
+          }"
+
