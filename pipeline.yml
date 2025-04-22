@@ -1,4 +1,4 @@
-name: SAST Pipeline with CodeQL
+name: SAST Pipeline with CodeQL on Windows
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   sast-and-validation:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout Code
@@ -16,9 +16,9 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
-          languages: python  # Replace with your project’s language(s) (e.g., javascript, java)
+          languages: python  # Replace with your project language(s) (e.g., python, javascript, java)
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:
-          category: "SAST Analysis"
+          category: "Static Analysis"
