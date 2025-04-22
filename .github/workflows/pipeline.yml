@@ -1,4 +1,4 @@
-name: SAST Pipeline
+name: Bandit Security Scan
 
 on:
   push:
@@ -6,35 +6,22 @@ on:
       - main
 
 jobs:
-  sast-and-validation:
-    runs-on: windows-latest
+  security-analysis:
+    runs-on: ubuntu-latest
 
     steps:
       # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      # Step 2: Add SonarScanner to Path (Manual Configuration)
-      - name: Configure SonarScanner
+      # Step 2: Install Python and Bandit
+      - name: Setup Python and Install Bandit
         run: |
-          setx PATH "%PATH%;C:\Users\u111606\anki2129\sonar-scanner-cli-7.1.0.4889-windows-x64\bin"
+          sudo apt-get update
+          sudo apt-get install python3 python3-pip -y
+          pip3 install bandit
 
-      # Step 3: Run SonarScanner
-      - name: Run SonarScanner
+      # Step 3: Run Bandit
+      - name: Run Bandit Security Analysis
         run: |
-          sonar-scanner ^
-            -Dsonar.projectKey=ankithadv21 ^
-            -Dsonar.sources=. ^
-            -Dsonar.host.url=https://sonarcloud.io ^
-            -Dsonar.login=b61fe1f677f741dc723d4614ef0bf8b609fc6937
-
-      # Step 4: Validate Critical L1 Issues
-      - name: Validate L1 Issues
-        run: |
-          $CRITICAL_ISSUES = (Get-Content .sonarqube/out/report-task.txt | ConvertFrom-Json).issues.l1
-          if ($CRITICAL_ISSUES -gt 20) {
-            Write-Host "Critical L1 issues exceed the allowed threshold of 20. Failing build."
-            exit 1
-          } else {
-            Write-Host "Critical L1 issues are within the allowed threshold. Build passed."
-          }
+          bandit -r .
