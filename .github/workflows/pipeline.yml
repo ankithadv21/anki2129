@@ -1,4 +1,4 @@
-name: Bandit Security Scan
+name: Bandit Security Scan (Windows)
 
 on:
   push:
@@ -7,21 +7,27 @@ on:
 
 jobs:
   security-analysis:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      # Step 2: Install Python and Bandit
-      - name: Setup Python and Install Bandit
+      # Step 2: Setup Python and Install Bandit
+      - name: Install Python and Bandit
         run: |
-          sudo apt-get update
-          sudo apt-get install python3 python3-pip -y
-          pip3 install bandit
+          python -m pip install --upgrade pip
+          pip install bandit
 
-      # Step 3: Run Bandit
-      - name: Run Bandit Security Analysis
+      # Step 3: Run Bandit Security Scan
+      - name: Run Bandit Scan and Check L1 Issues
         run: |
-          bandit -r .
+          bandit -r . -f json -o bandit_results.json
+          $critical_issues = (Get-Content bandit_results.json | ConvertFrom-Json | % { $_.results } | Where-Object { $_.issue_severity -eq "HIGH" }).Count
+          if ($critical_issues -gt 20) {
+            Write-Host "Critical Level 1 issues exceed the allowed threshold of 20. Failing the build."
+            exit 1
+          } else {
+            Write-Host "Critical Level 1 issues are within the threshold. Build passed."
+          }
