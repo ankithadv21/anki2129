@@ -17,7 +17,7 @@ jobs:
       # Step 2: Add SonarScanner to Path (Manual Configuration)
       - name: Configure SonarScanner
         run: |
-          setx PATH "%PATH%;C:\Users\u111606\anki2129\sonar-scanner-4.6.2\bin"
+          setx PATH "%PATH%;C:\Users\u111606\anki2129\sonar-scanner-cli-7.1.0.4889-windows-x64\bin"
 
       # Step 3: Run SonarScanner
       - name: Run SonarScanner
