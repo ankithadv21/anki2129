@@ -1,4 +1,4 @@
-name: SAST Pipeline with CodeQL on Windows
+name: SAST Pipeline
 
 on:
   push:
@@ -13,12 +13,26 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
-        with:
-          languages: python  # Replace with your project language(s) (e.g., python, javascript, java)
+      - name: Install SAST Tool (Example: SonarScanner CLI)
+        run: |
+          curl -O https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.zip
+          tar -xf sonar-scanner-cli-4.6.2.zip
+          setx PATH "%PATH%;%CD%\\sonar-scanner-4.6.2\\bin"
 
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
-        with:
-          category: "Static Analysis"
+      - name: Perform SAST Scan
+        run: sonar-scanner ^
+          -Dsonar.projectKey=ankithadv21 ^
+          -Dsonar.sources=. ^
+          -Dsonar.host.url=https://sonarcloud.io ^
+          -Dsonar.login=095827d8444418a255928c642b7dcdd018b12992
+      
+      - name: Check for L1 Issues
+        run: |
+          $CRITICAL_ISSUES = (Get-Content report.json | ConvertFrom-Json).critical_issues_count
+          if ($CRITICAL_ISSUES -gt 20) {
+            Write-Host "Pipeline failed due to more than 20 L1 issues."
+            exit 1
+          } else {
+            Write-Host "Pipeline passed with acceptable L1 issues."
+            exit 0
+          }
